@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 25, 31, 40;
+  --background-rgb: 242, 244, 246;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+}
+
+.card {
+  @apply bg-white rounded-3xl p-6 transition-transform active:scale-[0.98] shadow-sm;
+}
+
+.btn-primary {
+  @apply w-full bg-[#3182f6] text-white py-4 rounded-2xl font-semibold text-center hover:bg-[#2b72d7] transition-colors;
+}
+
+.btn-secondary {
+  @apply w-full bg-[#e8f3ff] text-[#1b64da] py-4 rounded-2xl font-semibold text-center hover:bg-[#d0e5ff] transition-colors;
+}
