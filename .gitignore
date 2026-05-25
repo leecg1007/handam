@@ -12,3 +12,19 @@ ENV/
 api_key.txt
 config.json
 *.log
+
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Production
+build/
+dist/
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
