@@ -52,3 +52,20 @@ AI 기술(OCR, LLM)을 활용하여 사용자의 아날로그 감성(손글씨 �
 1.  **쿠키 기반 보안**: XSS 공격 방지를 위해 액세스 토큰은 메모리에, 리프레시 토큰은 `httpOnly` 쿠키에 저장.
 2.  **PWA 구현**: '홈 화면에 추가' 기능 및 오프라인 접근성 확보.
 3.  **OCR 최적화**: 이미지 업로드 전 클라이언트 사이드에서 리사이징을 수행하여 데이터 비용 및 속도 개선.
+
+---
+
+## ⚙️ 실행 전 환경 변수
+
+루트에 `.env` 파일을 만들고 아래 값을 채워주세요(`.env.example` 참고).
+
+- `FIREBASE_WEB_API_KEY`: Firebase Authentication REST API 키
+- `CLOVA_OCR_INVOKE_URL`, `CLOVA_OCR_SECRET`: Naver Clova OCR 호출 정보
+- `GEMINI_API_KEY`: Gemini 요약 생성용 API 키
+- `FORTUNE_API_URL`: 운세 API URL (`{birthday}` 치환 지원)
+
+실행:
+
+```bash
+npm run start
+```

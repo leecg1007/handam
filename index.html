@@ -16,12 +16,6 @@
 <body>
 <div class="device">
 
-  <!-- Status bar -->
-  <div class="statusbar">
-    <span>9:41</span>
-    <span class="icons"><i class="fa-solid fa-signal"></i><i class="fa-solid fa-wifi"></i><i class="fa-solid fa-battery-three-quarters"></i></span>
-  </div>
-
   <!-- ============ HOME ============ -->
   <div id="page-home" class="page active">
     <div class="pad">
@@ -88,32 +82,7 @@
         <span class="h-sec">최근 기록</span>
         <button class="text-link" onclick="go('records')">전체보기</button>
       </div>
-      <div class="card reveal" style="--d:.25s;padding:6px">
-        <div class="diary-row tap" style="border-bottom:1px solid var(--line)" onclick="openRecord('한강에서의 산책','5월 17일','행복','친구와 함께 한강을 걸으며 바람을 느꼈다. 물빛이 반짝이고, 오래 미뤄둔 이야기를 자연스럽게 꺼낼 수 있어 마음이 가벼워졌다.')">
-          <div class="diary-thumb"><i class="fa-solid fa-pen-nib"></i></div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:14px;font-weight:800">한강에서의 산책</div>
-            <div class="muted" style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">5월 17일 · 친구와 함께 걸으며 바람을 느꼈다…</div>
-          </div>
-          <span class="chip emo-happy">행복</span>
-        </div>
-        <div class="diary-row tap" style="border-bottom:1px solid var(--line)" onclick="openRecord('바쁜 하루 속 여유','5월 16일','평온','업무 사이에 찾은 짧은 휴식이 하루의 균형을 잡아주었다. 커피 한 잔과 조용한 음악이 생각보다 큰 위로가 됐다.')">
-          <div class="diary-thumb"><i class="fa-solid fa-pen-nib"></i></div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:14px;font-weight:800">바쁜 하루 속 여유</div>
-            <div class="muted" style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">5월 16일 · 업무 사이에 찾은 짧은 휴식…</div>
-          </div>
-          <span class="chip emo-calm">평온</span>
-        </div>
-        <div class="diary-row tap" onclick="openRecord('비 오는 날의 사색','5월 14일','차분','창밖을 보며 오래 생각에 잠겼다. 빗소리가 복잡한 마음을 천천히 가라앉혀 주었고, 해야 할 일의 우선순위도 조금 선명해졌다.')">
-          <div class="diary-thumb"><i class="fa-solid fa-pen-nib"></i></div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:14px;font-weight:800">비 오는 날의 사색</div>
-            <div class="muted" style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">5월 14일 · 창밖을 보며 오래 생각에 잠겼다…</div>
-          </div>
-          <span class="chip emo-think">차분</span>
-        </div>
-      </div>
+      <div class="card reveal" style="--d:.25s;padding:6px" id="home-record-list"></div>
     </div>
   </div>
 
@@ -214,10 +183,12 @@
           <div class="muted" style="font-size:12px;font-weight:600;margin-top:5px">
             AI가 글씨를 인식하고 깔끔하게 정리해드려요
           </div>
+          <input id="ocr-camera-file" class="input" type="file" accept="image/*" capture="environment" style="display:none">
+          <input id="ocr-gallery-file" class="input" type="file" accept="image/*" style="display:none">
         </div>
         <div class="reveal" style="--d:.12s;display:flex;gap:10px;margin-top:12px">
-          <button class="btn btn-primary" onclick="runOCR()"><i class="fa-solid fa-camera"></i> 촬영하기</button>
-          <button class="btn btn-ghost" onclick="runOCR()"><i class="fa-solid fa-image"></i> 보관함</button>
+          <button class="btn btn-primary" onclick="openCameraOCR()"><i class="fa-solid fa-camera"></i> 촬영하기</button>
+          <button class="btn btn-ghost" onclick="openGalleryOCR()"><i class="fa-solid fa-image"></i> 보관함</button>
         </div>
         <div class="card tap reveal" style="--d:.17s;margin-top:14px;display:flex;gap:13px;align-items:center;padding:16px" onclick="go('manual')">
           <div class="diary-thumb" style="background:var(--accent-soft);color:var(--accent)">
@@ -254,15 +225,11 @@
         </div>
         <div class="card reveal" style="--d:.05s;margin-top:10px">
           <div class="muted" style="font-size:12px;font-weight:800;margin-bottom:10px">원문 (Clova OCR)</div>
-          <p class="ocr-quote">
-            오늘은 정말 날씨가 좋았다. 공원에 나가 책을 읽었는데, 바람이 살랑살랑 불어 기분이 상쾌했다. 새 프로젝트 아이디어도 떠올라 뿌듯한 하루였다.
-          </p>
+          <p class="ocr-quote" id="ocr-origin"></p>
         </div>
         <div class="card reveal" style="--d:.1s;margin-top:12px;background:var(--accent-soft);border-color:transparent">
           <span class="eyebrow"><i class="fa-solid fa-wand-magic-sparkles"></i> AI 한 줄 요약</span>
-          <p class="serif" style="font-size:16px;font-weight:700;line-height:1.6;margin-top:9px;color:var(--text)">
-            “산책과 독서로 마음을 채우고, 새 영감까지 얻은 충만한 하루.”
-          </p>
+          <p class="serif" id="ocr-summary" style="font-size:16px;font-weight:700;line-height:1.6;margin-top:9px;color:var(--text)"></p>
         </div>
         <div class="reveal" style="--d:.15s;margin:20px 4px 10px">
           <span class="h-sec">오늘의 감정은 어땠나요?</span>
@@ -293,8 +260,8 @@
         <div class="diary-thumb" style="background:var(--accent-soft);color:var(--accent)">
           <i class="fa-solid fa-chart-simple"></i>
         </div>
-        <div style="font-size:13px;font-weight:700;line-height:1.5;color:var(--text-soft)">
-          최근 일기 <b style="color:var(--text)">14편</b>을 분석해<br>오늘의 마음에 어울리는 글감을 골랐어요.
+        <div style="font-size:13px;font-weight:700;line-height:1.5;color:var(--text-soft)" id="prompt-meta">
+          최근 일기 <b style="color:var(--text)">0편</b>을 분석해<br>오늘의 마음에 어울리는 글감을 골랐어요.
         </div>
       </div>
 
@@ -415,40 +382,21 @@
         <button class="iconbtn" onclick="go('home')"><i class="fa-solid fa-arrow-left"></i></button>
         <h1 class="h-page">전체 기록</h1>
       </div>
-      <div class="card reveal" style="--d:.07s;padding:6px">
-        <div class="diary-row tap" style="border-bottom:1px solid var(--line)" onclick="openRecord('한강에서의 산책','5월 17일','행복','친구와 함께 한강을 걸으며 바람을 느꼈다. 물빛이 반짝이고, 오래 미뤄둔 이야기를 자연스럽게 꺼낼 수 있어 마음이 가벼워졌다.')">
-          <div class="diary-thumb"><i class="fa-solid fa-pen-nib"></i></div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:14px;font-weight:800">한강에서의 산책</div>
-            <div class="muted" style="font-size:12px;font-weight:600">5월 17일 · 친구와 함께 걸으며 바람을 느꼈다</div>
-          </div>
-          <span class="chip emo-happy">행복</span>
-        </div>
-        <div class="diary-row tap" style="border-bottom:1px solid var(--line)" onclick="openRecord('바쁜 하루 속 여유','5월 16일','평온','업무 사이에 찾은 짧은 휴식이 하루의 균형을 잡아주었다. 커피 한 잔과 조용한 음악이 생각보다 큰 위로가 됐다.')">
-          <div class="diary-thumb"><i class="fa-solid fa-pen-nib"></i></div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:14px;font-weight:800">바쁜 하루 속 여유</div>
-            <div class="muted" style="font-size:12px;font-weight:600">5월 16일 · 업무 사이에 찾은 짧은 휴식</div>
-          </div>
-          <span class="chip emo-calm">평온</span>
-        </div>
-        <div class="diary-row tap" style="border-bottom:1px solid var(--line)" onclick="openRecord('비 오는 날의 사색','5월 14일','차분','창밖을 보며 오래 생각에 잠겼다. 빗소리가 복잡한 마음을 천천히 가라앉혀 주었고, 해야 할 일의 우선순위도 조금 선명해졌다.')">
-          <div class="diary-thumb"><i class="fa-solid fa-pen-nib"></i></div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:14px;font-weight:800">비 오는 날의 사색</div>
-            <div class="muted" style="font-size:12px;font-weight:600">5월 14일 · 창밖을 보며 오래 생각했다</div>
-          </div>
-          <span class="chip emo-think">차분</span>
-        </div>
-        <div class="diary-row tap" onclick="openRecord('새 프로젝트 아이디어','5월 12일','설렘','새 프로젝트 아이디어가 떠올라 한참을 메모했다. 아직 거칠지만 내가 좋아하는 방향이라는 확신이 들었다.')">
-          <div class="diary-thumb"><i class="fa-solid fa-pen-nib"></i></div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:14px;font-weight:800">새 프로젝트 아이디어</div>
-            <div class="muted" style="font-size:12px;font-weight:600">5월 12일 · 떠오른 생각을 빠르게 적었다</div>
-          </div>
-          <span class="chip emo-excited">설렘</span>
-        </div>
+      <div class="card reveal" style="--d:.06s;padding:16px;display:flex;gap:10px">
+        <select class="field" id="filter-mood">
+          <option value="all">감정 전체</option>
+          <option value="행복">행복</option>
+          <option value="평온">평온</option>
+          <option value="설렘">설렘</option>
+          <option value="차분">차분</option>
+          <option value="지침">지침</option>
+        </select>
+        <select class="field" id="filter-date">
+          <option value="latest">최신순</option>
+          <option value="oldest">오래된순</option>
+        </select>
       </div>
+      <div class="card reveal" style="--d:.09s;padding:6px" id="records-list"></div>
     </div>
   </div>
 
@@ -475,6 +423,9 @@
           “기분 좋은 산책과 대화가 마음을 가볍게 만든 하루.”
         </p>
       </div>
+      <button class="btn btn-line reveal" style="--d:.17s;margin-top:12px;color:#BC5743;border-color:#F3C9C2" onclick="deleteCurrentRecord()">
+        <i class="fa-solid fa-trash"></i> 이 기록 삭제하기
+      </button>
     </div>
   </div>
 
@@ -513,13 +464,13 @@
       </div>
       <div class="card reveal" style="--d:.07s">
         <label class="field-label">현재 비밀번호</label>
-        <input class="input" type="password" placeholder="현재 비밀번호">
+        <input class="input" id="password-current" type="password" placeholder="현재 비밀번호">
         <label class="field-label" style="margin-top:14px">새 비밀번호</label>
-        <input class="input" type="password" placeholder="8자 이상">
+        <input class="input" id="password-next" type="password" placeholder="8자 이상">
         <label class="field-label" style="margin-top:14px">새 비밀번호 확인</label>
-        <input class="input" type="password" placeholder="한 번 더 입력">
+        <input class="input" id="password-next-confirm" type="password" placeholder="한 번 더 입력">
       </div>
-      <button class="btn btn-primary reveal" style="--d:.12s;margin-top:16px" onclick="showToast('비밀번호 변경 흐름이 준비됐어요')">
+      <button class="btn btn-primary reveal" style="--d:.12s;margin-top:16px" onclick="changePassword()">
         <i class="fa-solid fa-key"></i> 변경하기
       </button>
     </div>
@@ -549,7 +500,7 @@
           </div>
         </div>
       </div>
-      <button class="btn btn-primary reveal" style="--d:.12s;margin-top:16px" onclick="showToast('내보내기 파일을 준비했어요')">
+      <button class="btn btn-primary reveal" style="--d:.12s;margin-top:16px" onclick="exportDiaries()">
         <i class="fa-solid fa-download"></i> 일기 내보내기
       </button>
     </div>
@@ -567,12 +518,15 @@
       </div>
       <div class="card reveal" style="--d:.07s">
         <label class="field-label">이메일</label>
-        <input class="input" type="email" value="jmh@example.com">
+        <input class="input" id="login-email" type="email" value="jmh@example.com">
         <label class="field-label" style="margin-top:14px">비밀번호</label>
-        <input class="input" type="password" value="handam">
+        <input class="input" id="login-password" type="password" value="handam">
       </div>
       <button class="btn btn-primary reveal" style="--d:.12s;margin-top:16px" onclick="login()">
         <i class="fa-solid fa-right-to-bracket"></i> 로그인
+      </button>
+      <button class="btn btn-line reveal" style="--d:.14s;margin-top:10px" onclick="register()">
+        <i class="fa-solid fa-user-plus"></i> 회원가입
       </button>
     </div>
   </div>
@@ -603,9 +557,9 @@
       사주 기반으로 더 정확한 운세를 알려드려요.
     </p>
     <div style="display:flex;gap:9px;margin-top:18px">
-      <select class="field"><option>1990</option><option selected>1996</option><option>2000</option></select>
-      <select class="field"><option selected>5월</option><option>6월</option><option>7월</option></select>
-      <select class="field"><option>12일</option><option selected>20일</option><option>28일</option></select>
+      <select class="field" id="fortune-year"></select>
+      <select class="field" id="fortune-month"></select>
+      <select class="field" id="fortune-day"></select>
     </div>
     <div class="list-item" style="border:1px solid var(--border);border-radius:14px;margin-top:11px;padding:13px 16px">
       <div class="lead" style="font-size:13px"><i class="fa-solid fa-moon"></i> 음력으로 입력</div>
