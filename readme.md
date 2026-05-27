@@ -69,3 +69,37 @@ AI 기술(OCR, LLM)을 활용하여 사용자의 아날로그 감성(손글씨 �
 ```bash
 npm run start
 ```
+
+---
+
+## Firebase 설정 체크리스트
+
+아래 순서대로 하면 로그인/회원가입/비밀번호 변경이 동작합니다.
+
+1. Firebase 프로젝트 생성/선택
+   - [Firebase Console](https://console.firebase.google.com/)에서 프로젝트를 생성하거나 기존 프로젝트를 선택
+
+2. Authentication 활성화
+   - [Authentication Providers](https://console.firebase.google.com/project/_/authentication/providers) 이동
+   - 프로젝트 선택 후 **Email/Password** 활성화
+
+3. Web API 키 확인
+   - 프로젝트 설정 > 일반 > 웹 앱 구성에서 `apiKey` 확인
+   - 값을 `.env`의 `FIREBASE_WEB_API_KEY`에 입력
+
+4. 환경 변수 작성
+   - `.env.example`을 `.env`로 복사하고 모든 키 채우기
+   - 아래 명령으로 누락 키 확인:
+     ```bash
+     npm run verify:env
+     ```
+
+5. Firebase CLI 로그인(선택, 배포/운영용)
+   - `npx -y firebase-tools@latest login`
+   - 원격/헤드리스 환경이면 `--no-localhost` 옵션 사용
+
+6. 앱 실행 및 인증 테스트
+   - `npm run start`
+   - 로그인/회원가입 테스트
+   - 비밀번호 변경 테스트
+   - 테스트 계정: `admin` / `admin`

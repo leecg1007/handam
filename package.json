@@ -7,7 +7,8 @@
     "build": "node build-static.cjs",
     "start": "node server.cjs",
     "start:next": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "verify:env": "node scripts/verify-env.cjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",
