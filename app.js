@@ -1,4 +1,38 @@
-﻿const state = { selectedRecordId: null, records: [], auth: null, fortuneScore: 95, selectedPrompt: "" };
+﻿import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAnalytics, isSupported as analyticsSupported } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
+import {
+  getAuth,
+  onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+  updatePassword,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  GoogleAuthProvider,
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyA9B9AuVV679_hy5wVLKjmIaTLb9Ly9G9U",
+  authDomain: "handam-981b6.firebaseapp.com",
+  projectId: "handam-981b6",
+  storageBucket: "handam-981b6.firebasestorage.app",
+  messagingSenderId: "805379521540",
+  appId: "1:805379521540:web:65febd097008274cf44951",
+  measurementId: "G-9MYZL9G70Y",
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const auth = getAuth(firebaseApp);
+analyticsSupported()
+  .then((supported) => {
+    if (supported) getAnalytics(firebaseApp);
+  })
+  .catch(() => {});
+
+const state = { selectedRecordId: null, records: [], auth: null, fortuneScore: 95, selectedPrompt: "" };
+const googleProvider = new GoogleAuthProvider();
 let dbWorker, workerSeq = 0;
 const workerWaiters = new Map();
 const promptRotation = { 행복: 0, 평온: 0, 설렘: 0, 차분: 0, 지침: 0, default: 0 };
@@ -41,6 +75,24 @@ function initWorker() { dbWorker = new Worker("./db-worker.js"); dbWorker.onmess
 function formatDate(isoDate) { const date = new Date(isoDate); return `${date.getMonth() + 1}월 ${date.getDate()}일`; }
 function apiPost(url, payload) { return fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload || {}) }).then(async (response) => { const data = await response.json(); if (!response.ok) throw new Error(data.error || "요청이 실패했습니다."); return data; }); }
 function fileToBase64(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result || "").split(",")[1] || ""); reader.onerror = reject; reader.readAsDataURL(file); }); }
+function currentPageId() { return document.querySelector(".page.active")?.id?.replace("page-", "") || ""; }
+async function setAuthFromUser(user) {
+  const idToken = await user.getIdToken();
+  state.auth = { uid: user.uid, email: user.email, idToken };
+  localStorage.setItem("handam-auth", JSON.stringify(state.auth));
+}
+function authErrorMessage(error) {
+  const code = error?.code || "";
+  if (code === "auth/configuration-not-found" || code === "auth/auth-domain-config-required") {
+    return "Firebase 인증 설정이 비어 있어요. Email/Password 또는 소셜 로그인 제공자를 콘솔에서 먼저 활성화해주세요.";
+  }
+  if (code === "auth/invalid-credential" || code === "auth/wrong-password" || code === "auth/user-not-found") {
+    return "이메일 또는 비밀번호를 확인해주세요.";
+  }
+  if (code === "auth/popup-closed-by-user") return "로그인 창이 닫혔어요. 다시 시도해주세요.";
+  if (code === "auth/operation-not-allowed") return "해당 로그인 방식이 비활성화되어 있어요. Firebase Console에서 활성화해주세요.";
+  return error?.message || "인증 처리에 실패했어요.";
+}
 
 function go(id) { const target = document.getElementById("page-" + id); if (!target) return; document.querySelectorAll(".page").forEach((p) => p.classList.toggle("active", p === target)); document.querySelectorAll(".nav-item").forEach((n) => n.classList.toggle("active", n.dataset.page === id)); target.scrollTop = 0; if (id === "diary") resetOCR(); if (id === "fortune") setTimeout(animateGauge, 160); if (id === "records") renderRecordsPage(); if (id === "prompts") renderPromptRecommendations(); }
 function applyTheme(t) { document.documentElement.setAttribute("data-theme", t); document.getElementById("theme-btn").innerHTML = t === "dark" ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>'; const darkSwitch = document.getElementById("dark-switch"); if (darkSwitch) darkSwitch.classList.toggle("on", t === "dark"); localStorage.setItem("handam-theme", t); }
@@ -137,18 +189,64 @@ async function reloadRecords() { state.records = await callWorker("list"); rende
 async function deleteCurrentRecord() { if (!state.selectedRecordId) return; const result = await callWorker("delete", { id: state.selectedRecordId }); persistSerialized(result); state.selectedRecordId = null; await reloadRecords(); showToast("기록을 삭제했어요."); go("records"); }
 
 async function login() {
-  const email = document.getElementById("login-email").value.trim(), password = document.getElementById("login-password").value.trim();
+  const email = document.getElementById("login-email").value.trim();
+  const password = document.getElementById("login-password").value.trim();
   if (!email || !password) return showToast("이메일과 비밀번호를 입력해주세요.");
-  try { const data = await apiPost("/api/auth/login", { email, password }); state.auth = data; localStorage.setItem("handam-auth", JSON.stringify(data)); showToast("로그인 성공"); go("home"); }
-  catch (error) { showToast(error.message || "로그인에 실패했어요."); }
+
+  if (email === "admin" && password === "admin") {
+    state.auth = {
+      uid: "local-admin",
+      email: "admin@local.test",
+      idToken: "local-admin-token",
+      isLocalAdmin: true,
+    };
+    localStorage.setItem("handam-auth", JSON.stringify(state.auth));
+    showToast("로그인 성공");
+    go("home");
+    return;
+  }
+
+  try {
+    const credential = await signInWithEmailAndPassword(auth, email, password);
+    await setAuthFromUser(credential.user);
+    showToast("로그인 성공");
+    go("home");
+  } catch (error) {
+    showToast(authErrorMessage(error));
+  }
 }
 async function register() {
-  const email = document.getElementById("login-email").value.trim(), password = document.getElementById("login-password").value.trim();
+  const email = document.getElementById("login-email").value.trim();
+  const password = document.getElementById("login-password").value.trim();
   if (!email || !password) return showToast("이메일과 비밀번호를 입력해주세요.");
-  try { await apiPost("/api/auth/register", { email, password }); showToast("회원가입 완료, 로그인해주세요."); }
-  catch (error) { showToast(error.message || "회원가입에 실패했어요."); }
+  try {
+    await createUserWithEmailAndPassword(auth, email, password);
+    showToast("회원가입 완료, 로그인해주세요.");
+  } catch (error) {
+    showToast(authErrorMessage(error));
+  }
 }
-function logout() { state.auth = null; localStorage.removeItem("handam-auth"); showToast("로그아웃했어요."); go("login"); }
+async function loginWithGoogle() {
+  try {
+    const credential = await signInWithPopup(auth, googleProvider);
+    await setAuthFromUser(credential.user);
+    showToast("Google 로그인 성공");
+    go("home");
+  } catch (error) {
+    showToast(authErrorMessage(error));
+  }
+}
+async function logout() {
+  try {
+    if (!state.auth?.isLocalAdmin) {
+      await signOut(auth);
+    }
+  } catch (_error) {}
+  state.auth = null;
+  localStorage.removeItem("handam-auth");
+  showToast("로그아웃했어요.");
+  go("login");
+}
 async function changePassword() {
   const currentPassword = document.getElementById("password-current").value.trim();
   const nextPassword = document.getElementById("password-next").value.trim();
@@ -157,9 +255,18 @@ async function changePassword() {
   if (!currentPassword || !nextPassword || !confirmPassword) return showToast("모든 비밀번호 항목을 입력해주세요.");
   if (nextPassword !== confirmPassword) return showToast("새 비밀번호 확인이 일치하지 않아요.");
   try {
-    if (state.auth.email !== "admin@local.test") await apiPost("/api/auth/login", { email: state.auth.email, password: currentPassword });
-    const data = await apiPost("/api/auth/change-password", { idToken: state.auth.idToken, newPassword: nextPassword });
-    if (data.idToken) { state.auth = data; localStorage.setItem("handam-auth", JSON.stringify(data)); }
+    if (state.auth.email === "admin@local.test") {
+      showToast("테스트 계정은 비밀번호 변경을 건너뜁니다.");
+      return;
+    }
+    const user = auth.currentUser;
+    if (!user || !user.email) throw new Error("세션이 만료되었어요. 다시 로그인해주세요.");
+    const credential = EmailAuthProvider.credential(user.email, currentPassword);
+    await reauthenticateWithCredential(user, credential);
+    await updatePassword(user, nextPassword);
+    const idToken = await user.getIdToken(true);
+    state.auth = { uid: user.uid, email: user.email, idToken };
+    localStorage.setItem("handam-auth", JSON.stringify(state.auth));
     showToast("비밀번호를 변경했어요.");
   } catch (error) { showToast(error.message || "비밀번호 변경에 실패했어요."); }
 }
@@ -191,6 +298,7 @@ window.go = go; window.toggleTheme = toggleTheme; window.toggleSwitch = toggleSw
 window.openCameraOCR = openCameraOCR; window.openGalleryOCR = openGalleryOCR; window.resetOCR = resetOCR; window.saveDiary = saveDiary;
 window.refreshPrompts = refreshPrompts; window.startPromptDiary = startPromptDiary; window.saveManualDiary = saveManualDiary;
 window.updateFortuneFromBirthday = updateFortuneFromBirthday; window.logout = logout; window.login = login; window.register = register;
+window.loginWithGoogle = loginWithGoogle;
 window.changePassword = changePassword; window.exportDiaries = exportDiaries; window.showToast = showToast; window.openSheet = openSheet; window.closeSheet = closeSheet;
 
 (async function bootstrap() {
@@ -202,6 +310,11 @@ window.changePassword = changePassword; window.exportDiaries = exportDiaries; wi
   document.getElementById("filter-mood").addEventListener("change", renderRecordsPage);
   document.getElementById("filter-date").addEventListener("change", renderRecordsPage);
   await initWorker(); await reloadRecords();
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) return;
+    await setAuthFromUser(user);
+    if (currentPageId() === "login") go("home");
+  });
   try { state.auth = JSON.parse(localStorage.getItem("handam-auth") || "null"); } catch (_error) { state.auth = null; }
   if (state.auth) go("home"); else go("login");
 })();

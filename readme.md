@@ -103,3 +103,54 @@ npm run start
    - 로그인/회원가입 테스트
    - 비밀번호 변경 테스트
    - 테스트 계정: `admin` / `admin`
+
+---
+
+## Vercel 배포 가이드
+
+이 프로젝트는 Vercel에서 아래 구조로 동작합니다.
+
+- 정적 앱: `dist` (`index.html`, `app.js`, `styles.css`, `db-worker.js`)
+- 서버리스 API: `api/*`
+  - `/api/auth/login`
+  - `/api/auth/register`
+  - `/api/auth/change-password`
+  - `/api/ocr`
+  - `/api/llm/summarize`
+  - `/api/fortune`
+
+### 1) Vercel 환경변수 입력
+
+Vercel 프로젝트 대시보드에서 아래 경로로 이동:
+
+- Settings -> Environment Variables
+
+다음 키를 **Production / Preview / Development**(필요한 환경만) 에 입력:
+
+- `FIREBASE_WEB_API_KEY`
+- `CLOVA_OCR_INVOKE_URL`
+- `CLOVA_OCR_SECRET`
+- `GEMINI_API_KEY`
+- `FORTUNE_API_URL`
+- `PORT` (선택, Vercel에서는 보통 불필요)
+
+`FORTUNE_API_URL` 예시:
+
+- `https://api.example.com/fortune?birthday={birthday}`
+
+### 2) Firebase authorized domain 설정
+
+Google 로그인의 `unauthorized domain` 오류를 막으려면 Firebase Console에서 다음 도메인을 추가하세요.
+
+- Firebase Console -> Authentication -> Settings -> Authorized domains
+- `localhost`
+- `127.0.0.1`
+- `<your-project>.vercel.app`
+- 커스텀 도메인 사용 시 해당 도메인 (예: `handam.com`)
+
+### 3) 배포
+
+- Git 연동 후 Vercel에서 Deploy
+- 또는 CLI 사용 시 `vercel --prod`
+
+배포 후 Google 로그인, OCR, 요약, 운세 API를 순서대로 점검하세요.

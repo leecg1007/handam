@@ -518,15 +518,18 @@
       </div>
       <div class="card reveal" style="--d:.07s">
         <label class="field-label">이메일</label>
-        <input class="input" id="login-email" type="email" value="jmh@example.com">
+        <input class="input" id="login-email" type="email" value="" placeholder="you@example.com">
         <label class="field-label" style="margin-top:14px">비밀번호</label>
-        <input class="input" id="login-password" type="password" value="handam">
+        <input class="input" id="login-password" type="password" value="" placeholder="비밀번호">
       </div>
       <button class="btn btn-primary reveal" style="--d:.12s;margin-top:16px" onclick="login()">
         <i class="fa-solid fa-right-to-bracket"></i> 로그인
       </button>
       <button class="btn btn-line reveal" style="--d:.14s;margin-top:10px" onclick="register()">
         <i class="fa-solid fa-user-plus"></i> 회원가입
+      </button>
+      <button class="btn btn-line reveal" style="--d:.16s;margin-top:10px" onclick="loginWithGoogle()">
+        <i class="fa-brands fa-google"></i> Google로 로그인
       </button>
     </div>
   </div>
@@ -572,7 +575,7 @@
 
 </div>
 
-<script src="./app.js"></script>
+<script type="module" src="./app.js"></script>
 </body>
 </html>
 
